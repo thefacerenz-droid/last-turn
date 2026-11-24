@@ -26,13 +26,13 @@ export interface Settings {
   preset:Preset|'Custom'; graphics:Graphics; unit:'MPH'|'KM/H'; mode:'Automatic'|'Manual';
   sensitivity:number; deadzone:number; autoClutch:boolean; traction:boolean; steeringAssist:boolean;
   fov:number; chaseDistance:number; chaseHeight:number; minimap:boolean; diagnostics:boolean; showFps:boolean;
-  master:number; engine:number; road:number; effects:number; muted:boolean; tunes:Record<string,Tune>;
+  touch:'Auto'|'On'|'Off';master:number; engine:number; road:number; effects:number; muted:boolean; tunes:Record<string,Tune>;
 }
 const base:Settings = {
-  route:'pacific', lighting:'golden', density:'Medium', customCount:32, car:'',
+  route:'pacific', lighting:'golden', density:'Medium', customCount:32, car:'kuroda-rs',
   preset:'High',graphics:presets.High,unit:'MPH',mode:'Automatic',sensitivity:1,deadzone:.1,
   autoClutch:true,traction:true,steeringAssist:true,fov:62,chaseDistance:6.9,chaseHeight:2.55,minimap:true,
-  diagnostics:false,showFps:false,master:.75,engine:.8,road:.42,effects:.65,muted:false,tunes:{},
+  diagnostics:false,showFps:false,touch:'Auto',master:.75,engine:.8,road:.42,effects:.65,muted:false,tunes:{},
 };
 const storageKey='coastline.settings.1';
 export function saveLocal(key:string,value:unknown) { try { localStorage.setItem(key,JSON.stringify(value)); } catch { /* Settings work in memory when storage is full. */ } }
@@ -51,8 +51,10 @@ export class SettingsManager {
   data:Settings;
   constructor() {
     const saved=readLocal<Partial<Settings>|null>(storageKey,null);
-    this.data=restore(base,saved);
-    this.data.graphics=restore(presets.High,saved?.graphics);
+    const phone=typeof matchMedia!=='undefined'&&matchMedia('(pointer: coarse) and (max-width: 1100px)').matches;
+    const defaults:Settings=phone?{...base,preset:'Low',graphics:presets.Low,density:'Low'}:base;
+    this.data=restore(defaults,saved);
+    this.data.graphics=restore(defaults.graphics,saved?.graphics);
     if(!ROUTES.some(r=>r.id===this.data.route)) this.data.route='pacific';
     if(!(this.data.lighting in lightNames)) this.data.lighting='golden';
     if(!(this.data.density in densityCounts) && this.data.density!=='Custom') this.data.density='Medium';

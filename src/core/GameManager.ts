@@ -34,7 +34,7 @@ export class GameManager {
     this.render=new RenderManager(canvas,d.graphics);
     this.showroom=new Showroom(this.render.renderer);
     this.ui=new MenuUI(interfaceEl,this.settings,()=>getVehicle(d.car),(id,value)=>this.command(id,value));
-    this.input=new InputManager(a=>this.action(a),()=>this.ui.page==='game',(dx,dy)=>{if(this.ui.page==='garage')this.showroom.orbit(dx,dy);});
+    this.input=new InputManager(interfaceEl,a=>this.action(a),()=>this.ui.page==='game',(dx,dy)=>{if(this.ui.page==='garage')this.showroom.orbit(dx,dy);});
     document.addEventListener('visibilitychange',()=>{if(document.hidden&&this.ui.page==='game')this.pause();});
     window.addEventListener('blur',()=>{if(this.ui.page==='game')this.pause();});
     window.addEventListener('pagehide',()=>this.saveRun());
@@ -53,7 +53,7 @@ export class GameManager {
     if(version!==this.selection)return;
     const spec=getVehicle(id),t=this.settings.tune(id);
     const model=createVehicleModel(spec,{...t,paint:t.paint??spec.defaultPaint});
-    const old=this.showcase;this.showcase=model;this.showroom.setCar(model.root,spec.length);old?.dispose();
+    const old=this.showcase;this.showcase=model;this.showroom.setCar(model.root,spec);old?.dispose();
     this.settings.data.car=id;this.settings.save();
     if(this.ui.page!=='game')this.ui.render();
   }
@@ -115,6 +115,9 @@ export class GameManager {
   }
   private field(path:string,value:string|number|boolean){
     const d=this.settings.data;
+    if(path==='car'&&typeof value==='string'&&vehicles.some(car=>car.id===value)){
+      void this.selectCar(value).catch(e=>this.fail(e,'Vehicle could not be loaded'));return;
+    }
     if(path==='preset' && typeof value==='string' && value in presets)this.settings.preset(value as Preset);
     else if(path.startsWith('gfx.')){
       const key=path.slice(4) as keyof Graphics;
@@ -170,7 +173,7 @@ export class GameManager {
     const s=this.session;
     if(this.ui.page!=='game'||!s){
       if(this.ui.page==='garage'&&(this.controls.lookX||this.controls.lookY))this.showroom.orbit(this.controls.lookX*dt*180,this.controls.lookY*dt*110);
-      if(this.ui.showcase)this.showroom.render(dt,this.ui.garageOpen);return;
+      if(this.ui.showcase)this.showroom.render(dt,this.ui.garageOpen,this.ui.interior,d);return;
     }
     this.elapsed=Math.min(this.elapsed+dt,STEP*8);
     const start=performance.now();let steps=0;

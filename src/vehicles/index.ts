@@ -29,10 +29,10 @@ function footprint(){
 }
 const animated=new Set(['paint','rim','rimDark','head','brake','signal','turnL','turnR']);
 async function loadOne(spec:VehicleSpec,low:boolean){
-  if(low&&spec.design==='concept')return;
+  if(low&&spec.assetFile)return;
   const key=spec.id+(low?'-lod':'');if(templates.has(key))return;
   const waiting=loading.get(key);if(waiting)return waiting;
-  const path=spec.design==='concept'?'/assets/licensed/aurelia-cx.glb':'/assets/vehicles/'+key+'.glb';
+  const path=spec.assetFile??'/assets/vehicles/'+key+'.glb';
   const promise=loader.loadAsync(path).then(result=>{
     const group=result.scene;
     group.traverse(obj=>{if(obj instanceof Mesh){
@@ -60,6 +60,8 @@ export function createVehicleModel(spec:VehicleSpec,options:ModelOptions={}):Veh
   const root=new Group();root.name=spec.name;
   if(options.traffic||options.roadShadow){const shadow=new Mesh(shadowPlane,footprint());shadow.name='Contact shadow';shadow.scale.set(spec.width*1.27,1,spec.length*1.08);shadow.position.y=.026;root.add(shadow);}
   const detailed=high.clone(true);root.add(detailed);
+  const fineControls=detailed.getObjectByName('CockpitControls');
+  if(options.traffic&&fineControls)fineControls.visible=false;
   const farTemplate=options.traffic?templates.get(spec.id+'-lod'):undefined;
   const far=farTemplate?.clone(true);if(far){far.visible=false;root.add(far);}
   const locals=new Map<Material,MeshStandardMaterial>(),byName=new Map<string,MeshStandardMaterial[]>();
@@ -72,7 +74,8 @@ export function createVehicleModel(spec:VehicleSpec,options:ModelOptions={}):Veh
   const wheels:Object3D[]=[],rollers:Object3D[]=[],custom:Object3D[]=[],factories:Object3D[][]=[];
   for(const [i,n] of ['FL','FR','RL','RR'].entries()){
     const hub=detailed.getObjectByName(n);if(!hub)throw new Error(spec.id+' missing '+n);
-    const group=new Group();group.name='Spin'+n;const originals=[...hub.children];
+    const group=new Group();group.name='Spin'+n;
+    const originals=hub.children.filter(part=>!part.name.startsWith('BrakeCaliper'));
     // GLTFLoader uses a Mesh node itself for a wheel with a single primitive.
     if(hub instanceof Mesh){
       const surface=new Mesh(hub.geometry,hub.material);surface.castShadow=surface.receiveShadow=true;
@@ -88,7 +91,7 @@ export function createVehicleModel(spec:VehicleSpec,options:ModelOptions={}):Veh
     if(o.paint||o.metallic!==undefined)for(const m of byName.get('paint')??[]){if(o.paint)m.color.set(o.paint);if(o.metallic!==undefined){m.metalness=o.metallic;m.roughness=.31-.105*o.metallic;}}
     if(o.wheelColor||o.wheelStyle!==undefined){
       style=o.wheelStyle??style;finish=o.wheelColor??finish;
-      const replace=style!==0||(spec.design!=='concept'&&finish!=='#686b6a');
+      const replace=style!==0||(!spec.assetFile&&finish!=='#686b6a');
       for(const m of byName.get('rim')??[])m.color.set(finish);
       for(let i=0;i<4;i++){
         for(const node of factories[i])node.visible=!replace;

@@ -1,0 +1,10 @@
+services:
+  - type: web
+    runtime: static
+    name: last-exit
+    buildCommand: pnpm install --frozen-lockfile && pnpm run build
+    staticPublishPath: ./dist
+    headers:
+      - path: /assets/*
+        name: Cache-Control
+        value: public, max-age=0, must-revalidate

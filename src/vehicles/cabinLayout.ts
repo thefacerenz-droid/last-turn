@@ -37,6 +37,7 @@ export function cabinDesign(design: string | undefined): CabinDesign {
 }
 
 export function instrumentMount(spec: VehicleSpec) {
+  if(spec.design==='clubsport')return {x:-.34,y:.843,z:-.465,width:.262,height:.086,tilt:-.23};
   if(spec.design==='concept'){
     return {x:0,y:.797,z:-1.23,width:.238,height:.080,tilt:-.31};
   }

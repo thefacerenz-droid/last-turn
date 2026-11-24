@@ -1,0 +1,46 @@
+.touch-deck, .touch-tools { display: none }
+.hud.touch-layout { --touch-display: flex }
+.touch-deck, .touch-tools { display: var(--touch-display, none) }
+.touch-deck, .touch-tools, .hud-pause { touch-action:none; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none }
+.touch-deck {
+  position:absolute; bottom:max(12px,env(safe-area-inset-bottom)); left:max(14px,env(safe-area-inset-left));
+  right:max(14px,env(safe-area-inset-right)); justify-content:space-between; align-items:flex-end; pointer-events:none;
+}
+.thumb-left,.thumb-right { display:flex; flex-direction:column; gap:5px; align-items:flex-start }
+.thumb-right { align-items:flex-end }
+.touch-deck button,.touch-tools button {
+  display:inline-flex; justify-content:center; align-items:center; touch-action:none; border:1px solid #f5f0da82;
+  color:#faf5e7; background:#181d19c9; -webkit-tap-highlight-color:transparent; text-shadow:0 1px 2px #101310;
+}
+.touch-deck button.pressed,.touch-deck button:active,.touch-tools button:active { background:#e9b867ed; color:#1c211d; border-color:#f8ddaf; text-shadow:none }
+.thumb-steering,.pedals,.touch-aux { display:flex; gap:6px; align-items:flex-end }
+.thumb-steering button { width:clamp(52px,8.1vw,76px); height:clamp(54px,16vh,80px); border-radius:5px }
+.touch-aux button { height:44px; min-width:47px; padding:0 9px; font:600 12px/1 Barlow,sans-serif; border-radius:3px }
+.pedals button { position:relative; flex-direction:column; justify-content:flex-end; min-width:48px; gap:6px; border-radius:6px 6px 3px 3px; padding:7px 10px 9px; }
+.pedals [data-hold="gas"] { height:clamp(75px,22vh,100px); border-top:3px solid var(--accent); }
+.pedals [data-hold="brake"] { height:clamp(57px,16.5vh,73px); min-width:56px; }
+.pedals i { flex:1; width:24px; min-height:10px; opacity:.65; background:repeating-linear-gradient(90deg,transparent 0 3px,currentColor 3px 5px,transparent 5px 7px); }
+.pedals span { font:600 12px Barlow,sans-serif; }
+.touch-tools { position:absolute; top:max(13px,env(safe-area-inset-top)); right:max(120px,calc(env(safe-area-inset-right) + 120px)); gap:5px }
+.touch-tools button { width:44px; height:44px; border-radius:3px }
+.hud.touch-layout .drive-hints { display:none }
+.hud.touch-layout .score-box { left:max(13px,env(safe-area-inset-left)); top:max(13px,env(safe-area-inset-top)); min-width:76px; padding:5px 8px; }
+.hud.touch-layout .hud-top-right { right:max(13px,env(safe-area-inset-right)); top:max(13px,env(safe-area-inset-top)); padding:0 0 0 7px; gap:5px; height:44px; }
+.hud.touch-layout .hud-pause { height:44px; width:44px }
+.hud.touch-layout .cluster { right:50%; transform:translateX(50%); bottom:max(13px,env(safe-area-inset-bottom)); width:132px; padding:3px 7px; }
+.hud.touch-layout .speed-read strong { font-size:34px }
+.hud.touch-layout .gear-read strong { font-size:21px }
+.hud.touch-layout .map-hud { top:78px; bottom:auto; left:max(13px,env(safe-area-inset-left)); width:85px; }
+.hud.touch-layout .map-hud>span { display:none }
+.hud.touch-layout #diagnostics { z-index:1; left:max(13px,env(safe-area-inset-left)); top:75px; font:9px/1.32 monospace; pointer-events:none }
+.hud.touch-layout #fps-read { position:absolute; right:0; top:47px; white-space:nowrap; color:#f9f3e6 }
+@media (max-width:610px) and (orientation:portrait) {
+  .hud.touch-layout .cluster { bottom:calc(max(12px,env(safe-area-inset-bottom)) + 119px) }
+  .touch-deck { bottom:max(16px,env(safe-area-inset-bottom)) }
+  .touch-tools { right:max(115px,calc(env(safe-area-inset-right) + 115px)) }
+  .touch-aux button { font-size:11px }
+}
+@media (min-width:1000px) {
+  .hud.touch-layout .map-hud { width:125px }
+  .hud.touch-layout .cluster { width:156px }
+}

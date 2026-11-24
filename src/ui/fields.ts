@@ -3,7 +3,7 @@ import { lightNames, densityCounts, presets } from '../settings/SettingsManager'
 import { icon } from './icons';
 export function select(label:string,key:string,options:readonly (string|number)[]|Record<string,string>,value:string|number){
   const entries=Array.isArray(options)?options.map(v=>[String(v),String(v)]):Object.entries(options);
-  return '<label class="field"><span>'+label+'</span><select data-field="'+key+'">'+entries.map(([v,title])=>'<option value="'+v+'"'+(String(value)===v?' selected':'')+'>'+title+'</option>').join('')+'</select></label>';
+  return '<label class="field"><span>'+label+'</span><select aria-label="'+label+'" data-field="'+key+'">'+entries.map(([v,title])=>'<option value="'+v+'"'+(String(value)===v?' selected':'')+'>'+title+'</option>').join('')+'</select></label>';
 }
 export function range(label:string,key:string,value:number,min:number,max:number,step:number,units=''){
   return '<label class="field range-field"><span>'+label+'</span><span class="range-control"><input aria-label="'+label+'" data-field="'+key+'" type="range" min="'+min+'" max="'+max+'" step="'+step+'" value="'+value+'"><output>'+Number(value.toFixed(2))+units+'</output></span></label>';
@@ -14,7 +14,7 @@ function toggle(label:string,key:string,on:boolean){
 export function sessionFields(s:Settings){return select('Lighting','lighting',lightNames,s.lighting)+select('Traffic density','density',[...Object.keys(densityCounts),'Custom'],s.density)+(s.density==='Custom'?range('Active vehicles','customCount',s.customCount,6,72,1):'');}
 export function options(tab:string,s:Settings) {
   if(tab==='Driving')return select('Speed units','unit',['MPH','KM/H'],s.unit)+select('Transmission','mode',['Automatic','Manual'],s.mode)+
-    toggle('Automatic clutch','autoClutch',s.autoClutch)+toggle('Traction control','traction',s.traction)+toggle('Steering assist','steeringAssist',s.steeringAssist)+
+    select('Touch controls','touch',['Auto','On','Off'],s.touch)+toggle('Automatic clutch','autoClutch',s.autoClutch)+toggle('Traction control','traction',s.traction)+toggle('Steering assist','steeringAssist',s.steeringAssist)+
     range('Steering sensitivity','sensitivity',s.sensitivity,.55,1.6,.05)+range('Stick dead zone','deadzone',s.deadzone,.02,.35,.01)+
     range('Field of view','fov',s.fov,44,90,1,'°')+range('Chase distance','chaseDistance',s.chaseDistance,4.8,10,.1,'m')+
     range('Chase height','chaseHeight',s.chaseHeight,1.5,4,.05,'m')+toggle('Route minimap','minimap',s.minimap);
@@ -45,6 +45,7 @@ export function paintFields(t:Tune,stock:string,s:Settings){
 export function controls(){
   const groups=[['Keyboard',[['W / ↑','Accelerate'],['S / ↓','Brake · hold at rest to reverse in automatic'],['A D / ← →','Steer'],['Space','Handbrake'],['Q / E','Downshift / upshift in manual'],['Shift','Clutch'],['C / V','Cycle camera / free look'],['Drag','Look around'],['L / R','Headlights / reset vehicle'],['Z / X','Left / right indicators'],['Esc / F3','Pause / diagnostics']]],
   ['Standard controller',[['RT / LT','Accelerate / brake'],['Left stick','Steer'],['Right stick','Look around'],['Y / X','Camera / handbrake'],['LB / RB','Downshift / upshift'],['A','Clutch · select in menus'],['View / Menu','Reset / pause'],['D-pad / B','Navigate menus / back']]]] as const;
-  return groups.map(([title,rows])=>'<h3 class="field-group">'+title+'</h3>'+rows.map(([key,ex])=>'<div class="control-row"><kbd>'+key+'</kbd><span>'+ex+'</span></div>').join('')).join('');
+  const touch='<h3 class="field-group">Touch</h3><div class="control-row"><kbd>Left thumb</kbd><span>Hold either arrow to steer. Handbrake sits above the arrows.</span></div><div class="control-row"><kbd>Right thumb</kbd><span>Hold Gas or Brake. Keep Brake held at a stop for automatic reverse.</span></div><div class="control-row"><kbd>Camera</kbd><span>Tap the camera to change view or drag across the road to look around.</span></div><div class="control-row"><kbd>Manual</kbd><span>Tap Gear − or Gear + to shift. Hold Clutch if automatic clutch is off.</span></div>';
+  return touch+groups.map(([title,rows])=>'<h3 class="field-group">'+title+'</h3>'+rows.map(([key,ex])=>'<div class="control-row"><kbd>'+key+'</kbd><span>'+ex+'</span></div>').join('')).join('');
 }
 export const closeButton='<button type="button" class="icon-btn close" data-action="back" title="Back" aria-label="Back">'+icon('close')+'</button>';

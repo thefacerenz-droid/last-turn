@@ -1,7 +1,8 @@
-import { Group, Mesh, MeshStandardMaterial, MeshPhysicalMaterial, TorusGeometry, type BufferGeometry } from 'three';
+import { Group, Mesh, MeshStandardMaterial, MeshPhysicalMaterial, type BufferGeometry } from 'three';
 import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
-import { buildShell,buildWheel } from './bodywork';
-import { box,oval,Batch } from './geometry';
+import { buildShell,buildWheel,buildCaliper } from './bodywork';
+import { box,oval } from './geometry';
+import { buildCabin } from './cabin';
 import type { VehicleSpec } from './catalogue';
 
 function material(name:string,color:string,metalness:number,roughness:number){
@@ -26,7 +27,8 @@ export function originalModel(s:VehicleSpec,lod=false){
       box(shell.paint,[0,h*.55,l*.476],[w*.94,h*.2,.091],0xffffff,[0,0,0],.028);
     }
   }
-  if(!lod){
+  const driverCar=s.cockpitZ!==undefined;
+  if(!lod&&!driverCar){
     for(const side of [-1,1]){
       const x=side*s.width*.223;const z=s.design==='grand'?.33:s.design==='exotic'?-.14:.03;
       box(shell.trim,[x,s.height*.289,z],[s.width*.251,.17,.51],0x3a3631,[-.10,0,0],.068);
@@ -43,17 +45,19 @@ export function originalModel(s:VehicleSpec,lod=false){
   add(shell.paint.finish(),p);add(shell.glass.finish(),glass);
   add(shell.trim.finish(),material('trim','#ffffff',.31,.43));
   for(const [b,name,c] of [[shell.head,'head','#d3e0db'],[shell.tail,'brake','#a92c27'],[shell.left,'turnL','#b66b23'],[shell.right,'turnR','#b66b23']] as const)add(b.finish(),material(name,c,.23,.22));
-  const steer=new Group();steer.name='Steering';steer.position.set(-s.width*.225,s.height*.64,-s.length*.107);
-  if(!lod){
-    const hand=new Mesh(new TorusGeometry(.156,.019,8,32),new MeshStandardMaterial({color:'#282a29',roughness:.54}));hand.rotation.x=-.21;steer.add(hand);
-    const spoke=new Batch();box(spoke,[0,0,0],[.258,.038,.035],0x404441,[0,0,0],.013);box(spoke,[0,-.065,0],[.033,.13,.035],0x444742);add(spoke.finish(),material('steerTrim','#ffffff',.22,.5),steer);
+  if(!lod&&driverCar){
+    const cabin=buildCabin(s);root.add(cabin.shell,cabin.steering);
+  }else{
+    const steer=new Group();steer.name='Steering';root.add(steer);
   }
-  root.add(steer);
   const wheel=buildWheel(s,'#777c7c',!lod),wheelMat=material('factoryWheel','#ffffff',.37,.43);
   const wheelGeo=mergeVertices(wheel,.00008);wheel.dispose();
+  const caliper=!lod&&driverCar?buildCaliper(s):null;
   for(const [i,name] of ['FL','FR','RL','RR'].entries()){
     const pivot=new Group();pivot.name=name;pivot.position.set((i%2?-1:1)*-s.track/2,s.wheelRadius,(i<2?-1:1)*s.wheelbase/2);
-    const tire=new Mesh(wheelGeo,wheelMat);tire.name='wheelSurface';if(i%2===0)tire.rotation.y=Math.PI;pivot.add(tire);root.add(pivot);
+    const tire=new Mesh(wheelGeo,wheelMat);tire.name='wheelSurface';if(i%2===0)tire.rotation.y=Math.PI;pivot.add(tire);
+    if(caliper){const brake=new Mesh(caliper,wheelMat);brake.name='BrakeCaliper'+name;brake.rotation.y=tire.rotation.y;pivot.add(brake);}
+    root.add(pivot);
   }
   return root;
 }

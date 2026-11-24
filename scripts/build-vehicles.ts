@@ -10,11 +10,11 @@ class BinaryReader {
 Object.assign(globalThis,{FileReader:BinaryReader});
 const dir=new URL('../public/assets/vehicles/',import.meta.url);await mkdir(dir,{recursive:true});
 const all=new Map([...vehicles,...trafficVehicles].map(s=>[s.id,s]));
-for(const s of all.values()){
-  if(s.design==='concept')continue;
+const authored=[...all.values()].filter(s=>!s.assetFile);
+for(const s of authored){
   for(const low of [false,true]){
     const g=originalModel(s,low);const bytes=await new GLTFExporter().parseAsync(g,{binary:true,onlyVisible:false});
     await writeFile(new URL(s.id+(low?'-lod':'')+'.glb',dir),new Uint8Array(bytes as ArrayBuffer));
   }
 }
-console.log('Wrote high and distance GLBs for '+(all.size-1)+' original vehicle models.');
+console.log('Wrote high and distance GLBs for '+authored.length+' original vehicle models.');
