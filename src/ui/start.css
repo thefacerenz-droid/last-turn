@@ -93,6 +93,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .hud .score-box b { color:var(--accent) }
 .record-empty h3 { margin-top:0 }
 .credit-link:hover { color:var(--paper) }
+.tune-note { color:var(--muted); font-size:.86rem; padding:.5rem 0 .75rem; line-height:1.4 }
 @media (max-width: 800px) {
   .run-conditions { gap: .6rem; flex-direction:column; align-items:flex-start; font-size:.85rem }
   .run-strip { gap:1.5rem }

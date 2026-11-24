@@ -1,4 +1,5 @@
 import { clamp } from '../core/math';
+import { handlingTunes, type HandlingTune } from '../vehicles/handlingTunes';
 import { ROUTES, type RouteId } from '../world/roads';
 
 export const lightNames = { golden: 'Golden hour', afternoon: 'Afternoon', evening: 'Warm evening', night: 'Night drive', overcast: 'Overcast' } as const;
@@ -20,7 +21,7 @@ export const presets: Record<Preset, Graphics> = {
   High: levels(1,1024,2048,95,2,.85,600,1150,8),
   Ultra: levels(1.15,2048,4096,150,3,1,850,1550,16),
 };
-export interface Tune { paint?:string; metallic:number; wheelStyle:number; wheelColor:string; ride:number; spring:number }
+export interface Tune { handling:HandlingTune; paint?:string; metallic:number; wheelStyle:number; wheelColor:string; ride:number; spring:number }
 export interface Settings {
   route:RouteId; lighting:Lighting; density:Density; customCount:number; car:string;
   preset:Preset|'Custom'; graphics:Graphics; unit:'MPH'|'KM/H'; mode:'Automatic'|'Manual';
@@ -46,7 +47,7 @@ function restore<T extends object>(defaults:T,source:unknown):T {
   }
   return result;
 }
-const defaultTune:Tune={metallic:.78,wheelStyle:0,wheelColor:'#686b6a',ride:0,spring:1};
+const defaultTune:Tune={handling:'Stock',metallic:.78,wheelStyle:0,wheelColor:'#686b6a',ride:0,spring:1};
 export class SettingsManager {
   data:Settings;
   constructor() {
@@ -64,6 +65,7 @@ export class SettingsManager {
   tune(id:string):Tune {
     const old=this.data.tunes[id];
     const tune=restore(defaultTune,old);
+    if(!Object.hasOwn(handlingTunes,tune.handling)) tune.handling='Stock';
     if(old?.paint && /^#[0-9a-f]{6}$/i.test(old.paint)) tune.paint=old.paint;
     return this.data.tunes[id]=tune;
   }

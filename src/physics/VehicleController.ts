@@ -8,6 +8,7 @@ import { roadAt, roadHeight, laneOffset, isPaved } from '../world/roads';
 import { EngineSimulation } from './Drivetrain';
 import { PhysicsWorld, groups, layers } from './PhysicsWorld';
 import { WheelPhysics } from './WheelPhysics';
+import { handlingTunes } from '../vehicles/handlingTunes';
 
 const identity={x:0,y:0,z:0,w:1},zero={x:0,y:0,z:0};
 export class VehicleController {
@@ -60,7 +61,8 @@ export class VehicleController {
     this.acceleration=damp(this.acceleration,(this.speed-oldSpeed)/dt,7,dt);
     this.down.set(0,-1,0).applyQuaternion(this.rotation);
     const speed=Math.abs(this.speed);
-    const steerMax=.52/(1+speed*(settings.steeringAssist?.074:.048));
+    const tune=handlingTunes[this.tune.handling];
+    const steerMax=.52*tune.steering/(1+speed*(settings.steeringAssist?.074:.048));
     const steerInput=Math.sign(input.steer)*Math.pow(Math.abs(input.steer),1.32);
     this.steer=damp(this.steer,steerInput*steerMax*settings.sensitivity,input.steer===0?7.5:4.5,dt);
     for(const wheel of this.wheels)wheel.sample(this.position,this.rotation,this.down,this.cgZ,this.tune.ride,this.tune.spring);
@@ -73,17 +75,17 @@ export class VehicleController {
     let shaftSpeed=0,slip=0;
     for(let i=0;i<4;i++){shaftSpeed+=this.wheels[i].omega*fractions[i];if(fractions[i])slip=Math.max(slip,Math.abs(this.wheels[i].slip));}
     const tcs=settings.traction?clamp(1-(slip-.11)*1.2,.2,1):1;
-    const request=this.engine.update(dt,input,shaftSpeed,this.speed,settings.mode==='Automatic',settings.autoClutch,tcs);
+    const request=this.engine.update(dt,input,shaftSpeed,this.speed,settings.mode==='Automatic',settings.autoClutch,tcs,tune.power);
     this.braking=request.brake>.07||input.handbrake;
     const grip=s.grip*(isPaved(this.physics.route,this.s,this.position.x)?1:.62)*(this.impactTime>0?.84:1);
     for(let i=0;i<4;i++){
       const wheel=this.wheels[i],mate=this.wheels[i^1];
-      const differential=fractions[i]?clamp((mate.omega-wheel.omega)*2.3,-Math.abs(request.torque)*.12,Math.abs(request.torque)*.12):0;
-      wheel.apply(dt,this.rotation,wheel.front?this.steer:0,request.torque*fractions[i]+differential,request.brake,input.handbrake,grip);
+      const differential=fractions[i]?clamp((mate.omega-wheel.omega)*2.3*tune.lock,-Math.abs(request.torque)*.12,Math.abs(request.torque)*.12):0;
+      wheel.apply(dt,this.rotation,wheel.front?this.steer:0,request.torque*fractions[i]+differential,request.brake,input.handbrake,grip*(wheel.front?tune.front:tune.rear));
     }
     const v=this.velocity.length();
     if(v>.01){
-      const drag=.5*1.225*(s.width*s.height*.8)*.29*v*v;
+      const drag=.5*1.225*(s.width*s.height*.8)*.29*tune.drag*v*v;
       const rolling=s.mass*9.81*.012*clamp(v/.8,0,1);
       this.temp.copy(this.velocity).multiplyScalar(-(drag+rolling)*dt/v);
       this.body.applyImpulse(this.temp,true);

@@ -52,7 +52,7 @@ export class EngineSimulation {
     }
     return Math.min(torque,this.spec.hp*745.7/Math.max(1,rpm/toRPM));
   }
-  update(dt:number,input:Controls,wheelOmega:number,speed:number,auto:boolean,autoClutch:boolean,tcs:number) {
+  update(dt:number,input:Controls,wheelOmega:number,speed:number,auto:boolean,autoClutch:boolean,tcs:number,power=1) {
     const box=this.transmission;
     box.update(dt,input,auto,speed,this.rpm);
     const reversePedals=auto&&box.gear<0;
@@ -66,11 +66,11 @@ export class EngineSimulation {
     const clutchTarget=box.delay>0||!ratio?0:(auto||autoClutch?Math.max(launch,clamp(Math.abs(speed)/8,0,1)):1-input.clutch);
     this.clutch=clutchTarget===0?0:damp(this.clutch,clutchTarget,14,dt);
     const inertia=.21+this.spec.cylinders*.023;
-    const capacity=this.spec.torque*1.42*this.clutch;
+    const capacity=this.spec.torque*power*1.42*this.clutch;
     // The clutch impulse cannot close more than the current shaft-speed difference in one step.
     const clutchTorque=clamp((this.omega-coupled)*Math.min(6.2,inertia/dt*.45),-capacity,capacity);
     const idleForce=clamp((this.spec.idle/toRPM-this.omega)*8,0,this.spec.torque*.53);
-    const firing=this.rpm>=this.spec.redline?0:this.torqueAt(this.rpm)*this.throttle*(this.spec.turbo?.76+.24*this.boost:1);
+    const firing=this.rpm>=this.spec.redline?0:this.torqueAt(this.rpm)*power*this.throttle*(this.spec.turbo?.76+.24*this.boost:1);
     const friction=12+this.omega*.039+(1-this.throttle)*this.omega*.041;
     this.omega=clamp(this.omega+(firing+idleForce-clutchTorque-friction)*dt/inertia,this.spec.idle*.68/toRPM,this.spec.redline*1.025/toRPM);
     this.rpm=this.omega*toRPM;

@@ -17,6 +17,10 @@ test('a player can select, tune, drive, pause, save and revisit a run',async({pa
   await page.getByLabel('Select vehicle').selectOption('kessel-r4');
   await expect(page.getByRole('heading',{name:'Kessel R4'})).toBeVisible();
   await page.getByRole('button',{name:'Customize',exact:true}).click();
+  for(const preset of ['Grip','Speed','Drift','Grip + Speed']){
+    await page.getByLabel('Tune preset').selectOption(preset);
+    await expect(page.getByLabel('Tune preset')).toHaveValue(preset);
+  }
   await page.getByRole('button',{name:'Paint #a13c2d',exact:true}).click();
   await page.getByLabel('Wheel design').selectOption('1');
   await page.mouse.move(960,370);await page.mouse.down();await page.mouse.move(1030,350,{steps:5});await page.mouse.up();
@@ -56,6 +60,12 @@ test('a player can select, tune, drive, pause, save and revisit a run',async({pa
   await page.reload();
   await expect(page.locator('.car-caption')).toContainText('Kessel R4');
   await expect(page.locator('.run-conditions')).toContainText('36 traffic vehicles');
+  await page.getByRole('button',{name:'Garage',exact:true}).click();
+  await page.getByRole('button',{name:'Customize',exact:true}).click();
+  await expect(page.getByLabel('Tune preset')).toHaveValue('Grip + Speed');
+  await page.getByLabel('Select vehicle').selectOption('kuroda-rs');
+  await expect(page.getByLabel('Tune preset')).toHaveValue('Stock');
+  await page.getByRole('button',{name:'Last Exit home'}).click();
   await page.setViewportSize({width:740,height:480});await expect(page.getByRole('button',{name:'Start driving',exact:true})).toBeInViewport();
   expect(errors).toEqual([]);
 });

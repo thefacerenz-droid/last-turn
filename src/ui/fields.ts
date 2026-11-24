@@ -1,6 +1,7 @@
 import type { Settings, Graphics, Tune } from '../settings/SettingsManager';
 import { lightNames, densityCounts, presets } from '../settings/SettingsManager';
 import { icon } from './icons';
+import { handlingTunes } from '../vehicles/handlingTunes';
 export function select(label:string,key:string,options:readonly (string|number)[]|Record<string,string>,value:string|number){
   const entries=Array.isArray(options)?options.map(v=>[String(v),String(v)]):Object.entries(options);
   return '<label class="field"><span>'+label+'</span><select aria-label="'+label+'" data-field="'+key+'">'+entries.map(([v,title])=>'<option value="'+v+'"'+(String(value)===v?' selected':'')+'>'+title+'</option>').join('')+'</select></label>';
@@ -36,7 +37,8 @@ export function options(tab:string,s:Settings) {
 }
 export const palette=['#b7c3c6','#ddd9cc','#8b9c91','#526d83','#a13c2d','#d39340','#2f3539','#64715a'];
 export function paintFields(t:Tune,stock:string,s:Settings){
-  return '<div class="field paint-field"><span>Body color</span><div class="swatches">'+Array.from(new Set([stock,...palette])).map(c=>'<button aria-label="Paint '+c+'" data-paint="'+c+'" style="--paint:'+c+'" class="'+((t.paint??stock)===c?'chosen':'')+'"></button>').join('')+'</div></div>'+
+  return select('Tune preset','tune.handling',Object.keys(handlingTunes),t.handling)+'<p class="tune-note">'+handlingTunes[t.handling].description+'</p>'+
+  '<div class="field paint-field"><span>Body color</span><div class="swatches">'+Array.from(new Set([stock,...palette])).map(c=>'<button aria-label="Paint '+c+'" data-paint="'+c+'" style="--paint:'+c+'" class="'+((t.paint??stock)===c?'chosen':'')+'"></button>').join('')+'</div></div>'+
   range('Metallic finish','tune.metallic',t.metallic,0,1,.05)+select('Wheel design','tune.wheelStyle',{'0':'Factory','1':'Split spoke','2':'Track mesh'},t.wheelStyle)+
   select('Wheel finish','tune.wheelColor',{'#686b6a':'Gunmetal','#b4b4ae':'Machined silver','#242726':'Graphite','#9a805d':'Bronze'},t.wheelColor)+
   range('Ride height offset','tune.ride',t.ride,-.06,.075,.005,'m')+range('Spring stiffness','tune.spring',t.spring,.7,1.45,.05,'×')+

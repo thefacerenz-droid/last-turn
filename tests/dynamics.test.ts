@@ -8,6 +8,7 @@ import { STEP } from '../src/core/math';
 import { roadAt } from '../src/world/roads';
 import type { VehicleSpec } from '../src/vehicles';
 import { follow, LaneIndex, drivers } from '../src/traffic/TrafficAI';
+import { handlingTunes,type HandlingTune } from '../src/vehicles/handlingTunes';
 
 const fixture={length:4.55,width:1.88,height:1.34,wheelbase:2.72,track:1.61,wheelRadius:.335,mass:1590,cgHeight:.47,
   frontWeight:.51,spring:43000,damping:3800,travel:.22,antiRoll:12500,wheelMass:19,grip:1.12,drivetrain:'AWD',
@@ -48,4 +49,30 @@ test('IDM emergency braking and safe adjacent-lane evaluation',()=>{
   lanes.add(2,{...me,id:-1,s:2,speed:20});lanes.sort();
   assert.equal(lanes.choose(1,me,follow(me,slow)),1);
   lanes.lanes[2]=[];assert.equal(lanes.choose(1,me,follow(me,slow)),2);
+});
+
+test('garage presets change acceleration, braking and steering in the simulation',async()=>{
+  const runs=new Map<HandlingTune,{speed:number;braking:number;lock:number}>();
+  for(const handling of Object.keys(handlingTunes) as HandlingTune[]){
+    const physics=await PhysicsWorld.create('pacific');
+    try{
+      const settings=new SettingsManager(),tune=settings.tune('fixture');
+      tune.handling=handling;
+      const car=new VehicleController(physics,fixture,tune),input={...idleInput};
+      const advance=(steps:number)=>{
+        for(let i=0;i<steps;i++){physics.terrain(car.s);car.step(STEP,input,settings.data);physics.step(()=>{});car.capture();}
+      };
+      advance(90);input.throttle=1;advance(210);const speed=car.speed;
+      car.reset(0,1);input.throttle=0;advance(90);
+      car.body.setLinvel(car.forward.clone().multiplyScalar(22),true);
+      for(const wheel of car.wheels)wheel.omega=22/wheel.radius;
+      input.brake=1;advance(24);const braking=22-car.speed;
+      car.reset(0,1);input.brake=0;input.steer=1;advance(60);
+      runs.set(handling,{speed,braking,lock:car.steer});
+    }finally{physics.dispose();}
+  }
+  const stock=runs.get('Stock')!,grip=runs.get('Grip')!,speed=runs.get('Speed')!,mixed=runs.get('Grip + Speed')!;
+  assert.ok(speed.speed>stock.speed && mixed.speed>stock.speed);
+  assert.ok(grip.braking>stock.braking && mixed.braking>stock.braking);
+  assert.ok(runs.get('Drift')!.lock>stock.lock*1.2);
 });
