@@ -1,0 +1,31 @@
+{
+  "name": "coastline-motor-club",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "packageManager": "pnpm@11.25.0",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --host 0.0.0.0",
+    "test": "tsx --test tests/*.test.ts",
+    "test:browser": "playwright test",
+    "assets:build": "tsx scripts/build-vehicles.ts && tsx scripts/build-palms.ts"
+  },
+  "dependencies": {
+    "@dimforge/rapier3d-compat": "0.17.3",
+    "@fontsource/barlow": "5.2.6",
+    "@fontsource/barlow-condensed": "5.2.6",
+    "three": "0.180.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.1",
+    "@types/three": "0.180.0",
+    "tsx": "4.20.6",
+    "typescript": "5.9.3",
+    "vite": "7.2.2"
+  }
+}

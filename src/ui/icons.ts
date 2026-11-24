@@ -1,0 +1,24 @@
+const paths:Record<string,string>={
+  mark:'<path fill="currentColor" stroke="none" d="M1 18 10 4h5L6 18zm8 0L18 4h5l-9 14zm8 0 9-14h5l-9 14z"/>',
+  play:'<path d="m9 5 10 7-10 7z" fill="currentColor" stroke="none"/>',
+  arrow:'<path d="M4 12h15m-6-6 6 6-6 6"/>',left:'<path d="m15 5-7 7 7 7"/>',right:'<path d="m9 5 7 7-7 7"/>',
+  enter:'<path d="M19 5v9H5m4-4-4 4 4 4"/>',
+  gear:'<path d="m10 3 4 0 .8 2.5 2 .9 2.4-.6 2 3.4-1.7 1.8v2.2l1.7 1.8-2 3.4-2.4-.6-2 .9L14 22h-4l-.8-2.5-2-.9-2.4.6-2-3.4L4.5 14v-2.2L2.8 10l2-3.4 2.4.6 2-.9z"/><circle cx="12" cy="12.5" r="3.1"/>',
+  keys:'<rect x="2.2" y="5.6" width="19.6" height="13" rx="1.5"/><path d="M5 9h1m3 0h1m3 0h1m3 0h1M5 12h1m3 0h1m3 0h1m3 0h1m-12 3h8"/>',
+  sound:'<path d="M3 9h4l5-4v14l-5-4H3zM16 8q4 4 0 8m3-11q7 7 0 14"/>',
+  silent:'<path d="M3 9h4l5-4v14l-5-4H3zM16 9l6 6m0-6-6 6"/>',
+  pin:'<path d="M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 1 1 14 0Z"/><circle cx="12" cy="10" r="2.4"/>',
+  sun:'<path d="M3 16h18M5 20h14M7 15a5 5 0 0 1 10 0M12 3v3m-8 2 2.2 2.1M20 8l-2.2 2.1"/>',
+  road:'<path d="m7 3-4 18m14-18 4 18M12 3v3m0 3v4m0 3v5"/>',
+  car:'<path d="M3 14l1-4 4-1 3-3h5l3 4 2 1v5h-2m-12 0h8m-12 0H2v-2z"/><circle cx="6" cy="16" r="2"/><circle cx="17" cy="16" r="2"/>',
+  flag:'<path d="M5 21V4m0 1c5-5 9 4 15-1v9c-6 5-10-4-15 1"/>',
+  sliders:'<path d="M3 6h7m4 0h7M3 12h12m4 0h2M3 18h3m4 0h11"/><circle cx="12" cy="6" r="2"/><circle cx="17" cy="12" r="2"/><circle cx="8" cy="18" r="2"/>',
+  close:'<path d="m5 5 14 14M19 5 5 19"/>',
+  steer:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.3"/><path d="m3 10 7 2m4 0 7-2m-9 4v7"/>',
+  trophy:'<path d="M7 4h10v6a5 5 0 0 1-10 0zm0 2H3v2a4 4 0 0 0 5 4m9-6h4v2a4 4 0 0 1-5 4m-4 3v4m-4 2h8"/>',
+  pause:'<path d="M8 5v14m8-14v14" stroke-width="3"/>',rotate:'<path d="M19 7a8 8 0 1 0 1 8m0-12v5h-5"/>',
+  moon:'<path d="M20 14A9 9 0 0 1 10 3a9 9 0 1 0 10 11Z"/>',
+  cloud:'<path d="M6 18h12a4 4 0 0 0 .3-8 6 6 0 0 0-11-2 5 5 0 0 0-1.3 10z"/>',
+};
+export function icon(name:string,size=20){return '<svg aria-hidden="true" width="'+size+'" height="'+size+'" viewBox="0 0 '+(name==='mark'?'32 22':'24 24')+'" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">'+(paths[name]??'')+'</svg>';}
+export const brand='<span class="brand-mark">'+icon('mark',40)+'</span><span class="wordmark">COASTLINE<span>MOTOR CLUB</span></span>';
