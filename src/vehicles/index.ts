@@ -1,12 +1,13 @@
 import { BufferGeometry,DataTexture,Group,LinearFilter,Mesh,MeshBasicMaterial,MeshPhysicalMaterial,MeshStandardMaterial,Object3D,PlaneGeometry,type Material } from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
+import { Driver } from './Driver';
 import { buildWheel } from './bodywork';
 import { getVehicle,type VehicleSpec } from './catalogue';
 export { getVehicle,vehicles,trafficVehicles,type VehicleSpec } from './catalogue';
-export interface ModelOptions {paint?:string;metallic?:number;wheelStyle?:number;wheelColor?:string;traffic?:boolean;ride?:number;roadShadow?:boolean}
+export interface ModelOptions {paint?:string;metallic?:number;wheelStyle?:number;wheelColor?:string;traffic?:boolean;ride?:number;roadShadow?:boolean;driver?:boolean}
 export interface VehicleModel {
-  root:Group;wheels:Object3D[];wheelRollers:Object3D[];steeringWheel:Object3D;
+  driver?:Driver;root:Group;wheels:Object3D[];wheelRollers:Object3D[];steeringWheel:Object3D;
   setLights(braking:boolean,left:boolean,right:boolean,headlights:boolean):void;
   customize(options:ModelOptions):void;setDetail(far:boolean):void;dispose():void;
 }
@@ -86,6 +87,8 @@ export function createVehicleModel(spec:VehicleSpec,options:ModelOptions={}):Veh
     factories.push(originals);custom.push(option);hub.add(group);wheels.push(hub);rollers.push(group);
   }
   const steering=detailed.getObjectByName('Steering')??new Group();
+  const driver=options.driver ? new Driver(steering.position,spec.height,spec.cockpitZ??steering.position.z+.424) : undefined;
+  if(driver)detailed.add(driver.root);
   let style=0,finish='#686b6a',flags=-1;
   function apply(o:ModelOptions){
     if(o.paint||o.metallic!==undefined)for(const m of byName.get('paint')??[]){if(o.paint)m.color.set(o.paint);if(o.metallic!==undefined){m.metalness=o.metallic;m.roughness=.31-.105*o.metallic;}}
@@ -107,7 +110,7 @@ export function createVehicleModel(spec:VehicleSpec,options:ModelOptions={}):Veh
     lamp('turnL','#ff9d16',left?3:.01);lamp('turnR','#ff9d16',right?3:.01);lamp('signal','#ff9d16',left||right?3:.01);
   }
   apply({...options,paint:options.paint??spec.defaultPaint});lights(false,false,false,false);
-  return {root,wheels,wheelRollers:rollers,steeringWheel:steering,setLights:lights,customize:apply,
+  return {driver,root,wheels,wheelRollers:rollers,steeringWheel:steering,setLights:lights,customize:apply,
     setDetail(low){if(far){far.visible=low;detailed.visible=!low;}},
     dispose(){root.removeFromParent();for(const mat of locals.values())mat.dispose();root.clear();}};
 }

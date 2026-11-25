@@ -18,6 +18,7 @@ export class VehicleController {
   readonly rotation=new Quaternion(); readonly lastRotation=new Quaternion();
   readonly velocity=new Vector3(); readonly forward=new Vector3(0,0,-1);
   speed=0; steer=0; acceleration=0; braking=false; impactTime=0;signal=0;private signalPhase=0;
+  private pedalGas=0;private pedalBrake=0;private lever=0;
   private cgZ:number;
   private down=new Vector3();private temp=new Vector3();
   constructor(readonly physics:PhysicsWorld,readonly spec:VehicleSpec,public tune:Tune){
@@ -43,7 +44,7 @@ export class VehicleController {
     this.rotation.setFromAxisAngle(this.temp.set(0,1,0),-Math.atan(road.slope));this.lastRotation.copy(this.rotation);
     this.body.setTranslation(this.position,true);this.body.setRotation(this.rotation,true);
     this.body.setLinvel(zero,true);this.body.setAngvel(zero,true);
-    this.speed=this.steer=this.acceleration=0;this.impactTime=.15;
+    this.pedalGas=this.pedalBrake=this.lever=0;this.speed=this.steer=this.acceleration=0;this.impactTime=.15;
     for(const w of this.wheels){w.omega=w.angle=w.slip=0;}
     this.engine=new EngineSimulation(this.spec);
   }
@@ -52,6 +53,7 @@ export class VehicleController {
   }
   step(dt:number,input:Controls,settings:Settings) {
     this.impactTime=Math.max(0,this.impactTime-dt);
+    this.pedalGas=damp(this.pedalGas,input.throttle,13,dt);this.pedalBrake=damp(this.pedalBrake,input.brake,14,dt);this.lever=damp(this.lever,Number(input.handbrake),12,dt);
     this.signalPhase=(this.signalPhase+dt*1.6)%1;
     this.previous.copy(this.position);this.lastRotation.copy(this.rotation);
     const s=this.spec;
@@ -97,7 +99,7 @@ export class VehicleController {
     }
   }
   capture(){this.position.copy(this.body.translation());this.rotation.copy(this.body.rotation());}
-  draw(model:VehicleModel,alpha:number,headlights:boolean) {
+  draw(model:VehicleModel,alpha:number,headlights:boolean,cockpit=false) {
     model.root.quaternion.copy(this.lastRotation).slerp(this.rotation,alpha);
     model.root.position.lerpVectors(this.previous,this.position,alpha);
     model.root.position.add(this.temp.set(0,-this.spec.cgHeight,-this.cgZ).applyQuaternion(model.root.quaternion));
@@ -106,6 +108,7 @@ export class VehicleController {
       model.wheels[i].rotation.y=-w.steer;model.wheelRollers[i].rotation.x=-w.angle;
     });
     model.steeringWheel.rotation.z=-this.steer*5;
+    model.driver?.update(model.steeringWheel.rotation.z,this.pedalGas,this.pedalBrake,this.lever,cockpit);
     model.setLights(this.braking,this.signal<0&&this.signalPhase<.52,this.signal>0&&this.signalPhase<.52,headlights);
   }
   dispose(){this.physics.world.removeRigidBody(this.body);}

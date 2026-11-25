@@ -72,7 +72,7 @@ export class GameManager {
       world=await WorldStreamer.create(this.render.scene,d.route);
       world.setQuality(this.worldQuality());world.setLighting(d.lighting);world.update(0,0);
       const t=this.settings.tune(spec.id),car=new VehicleController(physics,spec,t);
-      model=createVehicleModel(spec,{...t,roadShadow:true,ride:0,paint:t.paint??spec.defaultPaint});this.render.scene.add(model.root);
+      model=createVehicleModel(spec,{...t,roadShadow:true,driver:true,ride:0,paint:t.paint??spec.defaultPaint});this.render.scene.add(model.root);
       traffic=new TrafficManager(physics,this.render.scene,car,this.settings.count,d.graphics.trafficDistance);
       traffic.clearSpawn(0,1);
       const dash=new Dashboard(spec);model.root.add(dash.mesh);
@@ -190,7 +190,7 @@ export class GameManager {
       this.elapsed=Math.max(0,this.elapsed-STEP);steps++;
     }
     this.physicsCost=damp(this.physicsCost,(performance.now()-start)/Math.max(1,steps),3,Math.max(dt,.001));
-    const alpha=this.elapsed/STEP;s.car.draw(s.model,alpha,this.headlights);s.traffic.draw(alpha,d.graphics.trafficDistance,this.headlights||d.lighting==='night');
+    const alpha=this.elapsed/STEP;s.car.draw(s.model,alpha,this.headlights,s.camera.mode===3);s.traffic.draw(alpha,d.graphics.trafficDistance,this.headlights||d.lighting==='night');
     s.world.update(s.car.s,dt);s.camera.update(dt,s.car,this.controls,d,alpha);
     s.dash.draw(dt,s.car,d.unit,s.camera.mode===3);
     this.audio.update(s.car,d,s.traffic.nearestDistance(),s.camera.mode===3);
