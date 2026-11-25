@@ -65,7 +65,7 @@ Press **F3** during a drive to inspect measured frame time, physics step time, a
 | `src/world` | Deterministic route alignment and ramps, streamed scenery, vegetation LODs, signs and night lighting |
 | `src/vehicles` | Car specifications, GLB loading, factory wheels, materials, lights and tuning |
 | `src/rendering` and `src/camera` | Live showroom, HDR lighting, scene reflections, shadows, postprocessing and six camera modes |
-| `src/input`, `src/audio`, `src/scoring` | Keyboard, standard gamepad and multi-touch input, real-time engine and road synthesis, clean passes, streaks and records |
+| `src/input`, `src/audio`, `src/scoring` | Keyboard, standard gamepad and multi-touch input, sampled engine playback and synthesized road effects, clean passes, streaks and records |
 | `src/settings` and `src/ui` | Saved preferences, HTML menus, map display and telemetry |
 
 The physics runs at 60 Hz. Springs, dampers and anti-roll forces act at the four wheel contact patches. Tire forces share the available friction between acceleration and cornering. The engine exchanges torque with the driven wheels through the clutch, selected ratio and final drive. Near traffic uses dynamic rigid bodies with CCD. Distant traffic retains its lane and speed simulation and uses cheaper visual models.
@@ -74,7 +74,7 @@ The physics runs at 60 Hz. Springs, dampers and anti-roll forces act at the four
 
 The Kuroda RS Club adapts a licensed wide-body coupe and modeled interior by Socksthecat, with game meshes and textures prepared by CryHam. The center-seat Aurelia CX adapts the licensed Khronos Car Concept. The ten other sports cars use original bodies and cockpits, with model-specific seats, steering wheels, controls and instruments. The original designs have simpler bodywork than the two licensed models. Garage performance figures are fictional design specifications. Road grade, tire slip, gearing and driver inputs affect measured acceleration and top speed.
 
-The showroom combines a generated coastal backdrop with a live 3D vehicle, orbit camera and real shadows. The highways, traffic and roadside scenery render in 3D during play. Engine, traffic and tire audio use real-time synthesis. The collision system models rigid impacts and loss of control. Cosmetic body deformation is outside this release.
+The showroom combines a generated coastal backdrop with a live 3D vehicle, orbit camera and real shadows. The highways, traffic and roadside scenery render in 3D during play. Player engines blend licensed real-car recordings by RPM and throttle. Traffic and tire effects use real-time synthesis. The collision system models rigid impacts and loss of control. Cosmetic body deformation is outside this release.
 
 The renderer uses WebGL 2, a configurable frame cap, browser-managed display synchronization and atmospheric fog. Native WebGPU, ray-marched volumetrics and block-compressed GPU textures are outside this release. Actual performance depends on resolution, graphics settings and the device.
 

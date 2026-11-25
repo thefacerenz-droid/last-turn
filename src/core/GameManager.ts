@@ -193,7 +193,7 @@ export class GameManager {
     const alpha=this.elapsed/STEP;s.car.draw(s.model,alpha,this.headlights);s.traffic.draw(alpha,d.graphics.trafficDistance,this.headlights||d.lighting==='night');
     s.world.update(s.car.s,dt);s.camera.update(dt,s.car,this.controls,d,alpha);
     s.dash.draw(dt,s.car,d.unit,s.camera.mode===3);
-    this.audio.update(s.car,d,s.traffic.nearestDistance());
+    this.audio.update(s.car,d,s.traffic.nearestDistance(),s.camera.mode===3);
     this.render.renderer.info.autoReset=false;this.render.renderer.info.reset();
     this.render.draw(dt,s.car,this.headlights);
     this.stats.draws=this.render.renderer.info.render.calls;this.stats.triangles=this.render.renderer.info.render.triangles;
