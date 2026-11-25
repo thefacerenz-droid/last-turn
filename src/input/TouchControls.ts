@@ -11,7 +11,7 @@ export class TouchControls {
   constructor(root: HTMLElement, private trigger: (action: Tap) => void) {
     root.addEventListener('pointerdown', event => {
       const button = (event.target as Element).closest<HTMLButtonElement>('button[data-hold],button[data-tap]');
-      if (!button || event.button !== 0) return;
+      if (!button || event.button !== 0 || root.dataset.page!=='game') return;
       event.preventDefault();
       button.setPointerCapture(event.pointerId);
       this.contacts.set(event.pointerId, button);

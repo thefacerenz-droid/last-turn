@@ -1,4 +1,22 @@
 .touch-deck, .touch-tools { display: none }
+.layout-tools {
+  position:absolute; z-index:5; top:43%; left:50%; transform:translate(-50%,-50%);
+  display:grid; gap:7px; width:min(285px,80vw); padding:10px 13px;
+  background:#1b201efa; border-top:2px solid var(--accent); pointer-events:auto;
+}
+.layout-tools label,.layout-tools>div {display:flex;align-items:center;justify-content:space-between;gap:8px}
+.layout-tools label,.layout-tools button,.layout-tools select {font-size:13px}
+.layout-tools select {max-width:64%;padding:4px}
+.layout-tools header {display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--rule)}
+.layout-tools header button {color:var(--muted)}
+.layout-tools.lower {top:auto;bottom:max(4px,env(safe-area-inset-bottom));transform:translateX(-50%)}
+.layout-tools input {min-width:0;flex:1;accent-color:var(--accent)}
+.layout-tools output {min-width:36px;text-align:right}
+.layout-tools button {padding:5px 7px;min-height:36px}
+.layout-selected {outline:2px solid var(--accent);outline-offset:2px}
+[data-page="layout"] .hud {background:#1119136b}
+[data-page="layout"] #diagnostics,[data-page="layout"] .map-hud {display:none}
+.pause-list {overflow-y:auto;min-height:0}
 .hud.touch-layout { --touch-display: flex }
 .touch-deck, .touch-tools { display: var(--touch-display, none) }
 .touch-deck, .touch-tools, .hud-pause { touch-action:none; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none }

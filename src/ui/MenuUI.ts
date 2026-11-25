@@ -6,8 +6,9 @@ import { vehicles, type VehicleSpec } from '../vehicles';
 import { brand,icon } from './icons';
 import { closeButton,controls,options,paintFields,sessionFields,select } from './fields';
 import { hudMarkup } from './RaceHUD';
+import { TouchLayout,layoutToolbar } from './TouchLayout';
 
-export type Page='home'|'garage'|'routes'|'setup'|'settings'|'controls'|'records'|'game'|'pause';
+export type Page='home'|'garage'|'routes'|'setup'|'settings'|'controls'|'records'|'game'|'pause'|'layout';
 type Emit=(action:string,value?:string|number|boolean)=>void;
 const titles:Partial<Record<Page,string>>={setup:'Session setup',routes:'Routes',settings:'Settings',controls:'Controls',records:'Records'};
 const nightIcon=(t:string)=>t==='night'?'moon':t==='overcast'?'cloud':'sun';
@@ -21,7 +22,9 @@ function mapPreview(r:Route){
 export class MenuUI {
   page:Page='home'; private stack:Page[]=[];private tab='Graphics';private garageTab='Overview';
   private busy=false; private garageFromSession=false;
+  private layout:TouchLayout;
   constructor(readonly el:HTMLElement,readonly store:SettingsManager,private current:()=>VehicleSpec,private emit:Emit){
+    this.layout=new TouchLayout(el,()=>this.back());
     el.addEventListener('click',e=>{
       const b=(e.target as Element).closest<HTMLButtonElement>('button');if(!b||b.disabled)return;
       if(b.dataset.action)this.act(b.dataset.action);
@@ -32,7 +35,7 @@ export class MenuUI {
       else if(b.dataset.garage){this.garageTab=b.dataset.garage;this.render();}
     });
     el.addEventListener('input',e=>{
-      const field=e.target as HTMLInputElement;if(field.type==='range'&&field.nextElementSibling)field.nextElementSibling.textContent=field.value;
+      const field=e.target as HTMLInputElement;if(field.type==='range'&&field.dataset.field&&field.nextElementSibling)field.nextElementSibling.textContent=field.value;
     });
     el.addEventListener('change',e=>{
       const field=e.target as HTMLInputElement;if(!field.dataset.field)return;
@@ -51,7 +54,7 @@ export class MenuUI {
     if(this.busy)return;
     if(id==='back'){this.back();return;}
     if(id==='toggle-audio'){this.emit('field:muted',!this.store.data.muted);return;}
-    if(id==='garage'||id==='home'||id==='settings'||id==='controls'||id==='routes'||id==='setup'||id==='records'){
+    if(id==='layout'||id==='garage'||id==='home'||id==='settings'||id==='controls'||id==='routes'||id==='setup'||id==='records'){
       if(id==='home'&&this.garageFromSession){this.emit('menu');return;}
       if(id==='garage'&&this.page==='pause')this.garageFromSession=true;
       if(id==='home')this.stack=[];
@@ -110,7 +113,7 @@ export class MenuUI {
   private overlayBody(r:Route){
     const s=this.store.data;
     if(this.page==='settings')return '<div class="tabs">'+['Graphics','Driving','Audio'].map(t=>'<button data-tab="'+t+'" class="'+(t===this.tab?'selected':'')+'">'+t+'</button>').join('')+'</div><div class="scroll-area">'+options(this.tab,s)+'</div>';
-    if(this.page==='controls')return '<div class="scroll-area">'+controls()+'<a class="credit-link" href="/credits.html" target="_blank" rel="noopener">Art and licenses</a></div>';
+    if(this.page==='controls')return '<div class="scroll-area">'+action('layout','Edit touch layout','secondary')+controls()+'<a class="credit-link" href="/credits.html" target="_blank" rel="noopener">Art and licenses</a></div>';
     if(this.page==='setup')return '<div class="scroll-area">'+select('Highway','route',Object.fromEntries(ROUTES.map(v=>[v.id,v.name])),s.route)+sessionFields(s)+'</div><div class="sheet-actions">'+action(this.suspended?'back':'drive',this.suspended?'Done':'Start driving','primary',this.suspended?'enter':'play')+'</div>';
     if(this.page==='routes')return '<div class="routes-list scroll-area">'+ROUTES.map(v=>'<button data-route="'+v.id+'" class="route-choice '+(v.id===r.id?'chosen':'')+'"><img class="route-map" alt="" src="/art/'+v.id+'-thumb.webp"><span><small>Route '+v.shield+' · '+v.lanes+' lanes</small><strong>'+v.name+'</strong><em>'+v.district+'</em></span><i></i></button>').join('')+'<div class="route-detail">'+mapPreview(r)+'<p class="route-description">'+r.description+'</p></div></div><div class="sheet-actions">'+action('back','Use this route','primary','enter')+action('setup','Session setup','flat','sliders')+'</div>';
     const list=records();
@@ -121,13 +124,15 @@ export class MenuUI {
     const pos=this.el.querySelector('.scroll-area')?.scrollTop??0;
     const oldPage=this.el.dataset.page;this.el.dataset.page=this.page;
     if(this.page==='game')this.el.innerHTML=hudMarkup(this.store.data);
+    else if(this.page==='layout')this.el.innerHTML=hudMarkup({...this.store.data,touch:'On'})+layoutToolbar;
     else if(this.page==='home')this.el.innerHTML=this.home(r);
     else if(this.page==='garage')this.el.innerHTML=this.garage();
     else if(this.page==='pause')this.el.innerHTML='<section class="overlay pause-overlay"><div class="option-sheet pause-sheet"><div class="section-tag">Session paused</div><h1>'+r.name+'</h1><div class="pause-list">'+
-      action('resume','Resume drive','primary','play')+action('restart','Restart session','','rotate')+action('garage','Change vehicle','','car')+action('settings','Settings','','sliders')+action('controls','Controls','','keys')+action('menu','Return to main menu','','left')+'</div></div></section>';
+      action('resume','Resume drive','primary','play')+action('layout','Edit touch layout','','sliders')+action('restart','Restart session','','rotate')+action('garage','Change vehicle','','car')+action('settings','Settings','','sliders')+action('controls','Controls','','keys')+action('menu','Return to main menu','','left')+'</div></div></section>';
     else this.el.innerHTML=(this.suspended?'':this.header())+'<section class="overlay"><div class="option-sheet '+(this.page==='routes'?'map-sheet':'')+'"><div class="sheet-title"><h1>'+titles[this.page]+'</h1>'+closeButton+'</div>'+this.overlayBody(r)+'</div></section>';
     if(oldPage===this.page){const area=this.el.querySelector('.scroll-area');if(area)area.scrollTop=pos;}
     this.el.classList.toggle('in-race',this.page==='game');document.body.dataset.page=this.page;
+    this.layout.bind(this.page==='layout');
   }
   pad(actionName:string){
     if(actionName==='back'){this.back();return;}

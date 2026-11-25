@@ -2,6 +2,38 @@ import { test,expect } from '@playwright/test';
 
 test.use({isMobile:true,hasTouch:true,viewport:{width:844,height:390},deviceScaleFactor:2});
 
+test('move and resize a pedal, keep its hit target, and reset each orientation independently',async({page,context})=>{
+  await page.goto('/');
+  await page.getByRole('button',{name:'Controls',exact:true}).tap();
+  const edit=page.getByRole('button',{name:'Edit touch layout'});
+  await edit.tap();
+  const gas=page.getByRole('button',{name:'Accelerate',exact:true});
+  const box=await gas.boundingBox();expect(box).toBeTruthy();
+  const x=box!.x+box!.width/2,y=box!.y+box!.height/2;
+  const client=await context.newCDPSession(page);
+  await client.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x,y,id:1}]});
+  await client.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:x-100,y:y-70,id:1}]});
+  await client.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+  await page.getByLabel('Button size').fill('145');
+  const moved=await gas.boundingBox();
+  expect(moved!.width).toBeGreaterThan(box!.width*1.4);
+  expect(moved!.x).toBeLessThan(box!.x-80);
+  await page.getByRole('button',{name:'Save layout'}).tap();
+  await page.reload();await page.getByRole('button',{name:'Start driving'}).tap();
+  await expect(gas).toBeVisible();
+  expect((await gas.boundingBox())!.x).toBeCloseTo(moved!.x,0);
+  await client.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:x-100,y:y-70,id:1}]});
+  await expect.poll(async()=>Number(await page.locator('#speed').innerText())).toBeGreaterThan(4);
+  await client.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+  await page.getByRole('button',{name:'Pause',exact:true}).tap();await edit.tap();
+  await page.setViewportSize({width:390,height:844});await expect(page.getByLabel('Button size')).toHaveValue('100');
+  await page.setViewportSize({width:844,height:390});await expect(page.getByLabel('Button size')).toHaveValue('145');
+  await page.getByRole('button',{name:'Reset layout'}).tap();await page.getByRole('button',{name:'Cancel'}).tap();
+  await edit.tap();await expect(page.getByLabel('Button size')).toHaveValue('145');
+  await page.getByRole('button',{name:'Reset layout'}).tap();await page.getByRole('button',{name:'Save layout'}).tap();
+  await edit.tap();await expect(page.getByLabel('Button size')).toHaveValue('100');
+});
+
 test('two thumbs steer, accelerate and brake, with manual shifting and cancellation',async({page,context},info)=>{
   const errors:string[]=[];
   page.on('pageerror',e=>errors.push(e.message));

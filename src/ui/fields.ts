@@ -15,7 +15,7 @@ function toggle(label:string,key:string,on:boolean){
 export function sessionFields(s:Settings){return select('Lighting','lighting',lightNames,s.lighting)+select('Traffic density','density',[...Object.keys(densityCounts),'Custom'],s.density)+(s.density==='Custom'?range('Active vehicles','customCount',s.customCount,6,72,1):'');}
 export function options(tab:string,s:Settings) {
   if(tab==='Driving')return select('Speed units','unit',['MPH','KM/H'],s.unit)+select('Transmission','mode',['Automatic','Manual'],s.mode)+
-    select('Touch controls','touch',['Auto','On','Off'],s.touch)+toggle('Automatic clutch','autoClutch',s.autoClutch)+toggle('Traction control','traction',s.traction)+toggle('Steering assist','steeringAssist',s.steeringAssist)+
+    select('Touch controls','touch',['Auto','On','Off'],s.touch)+'<button class="secondary" data-action="layout">Edit touch layout</button>'+toggle('Automatic clutch','autoClutch',s.autoClutch)+toggle('Traction control','traction',s.traction)+toggle('Steering assist','steeringAssist',s.steeringAssist)+
     range('Steering sensitivity','sensitivity',s.sensitivity,.55,1.6,.05)+range('Stick dead zone','deadzone',s.deadzone,.02,.35,.01)+
     range('Field of view','fov',s.fov,44,90,1,'°')+range('Chase distance','chaseDistance',s.chaseDistance,4.8,10,.1,'m')+
     range('Chase height','chaseHeight',s.chaseHeight,1.5,4,.05,'m')+toggle('Route minimap','minimap',s.minimap);
