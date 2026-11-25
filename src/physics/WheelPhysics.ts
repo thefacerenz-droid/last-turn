@@ -40,7 +40,8 @@ export class WheelPhysics {
     this.steer=steer;
     const inertia=this.spec.wheelMass*this.radius*this.radius*.64;
     const freeOmega=this.omega+torque*dt/inertia;
-    const brakeTorque=brake*this.spec.mass*(this.front?1.38:.91)+(handbrake&&!this.front?this.spec.mass*2:0);
+    const parkingBrake=handbrake&&!this.front;
+    const brakeTorque=brake*this.spec.mass*(this.front?1.95:1.28)+(parkingBrake?this.spec.mass*2:0);
     this.omega=Math.sign(freeOmega)*Math.max(0,Math.abs(freeOmega)-brakeTorque*dt/inertia);
     if(this.planted && this.load>0) {
       this.forward.set(Math.sin(steer),0,-Math.cos(steer)).applyQuaternion(orientation);
@@ -48,22 +49,32 @@ export class WheelPhysics {
       this.side.crossVectors(this.forward,this.normal).normalize();
       const along=this.forward.dot(this.velocity),across=this.side.dot(this.velocity);
       const reference=Math.max(2.5,Math.abs(along));
-      const diff=this.omega*this.radius-along;
       const stiffness=this.load*10;
+      this.lateralSlip=Math.atan2(across,Math.max(2,Math.abs(along)));
+      const fy=clamp(-this.lateralSlip*this.load*8,-Math.abs(across)*this.spec.mass/(4*dt),Math.abs(across)*this.spec.mass/(4*dt));
+      const capacity=this.load*grip*(parkingBrake?.56:1)*clamp(1.1-.1*this.load/(this.spec.mass*9.81/4),.78,1.1);
+      const compliance=reference/stiffness+dt*(this.radius*this.radius/inertia+4/this.spec.mass);
+      const absActive=brake>0 && !parkingBrake && Math.abs(along)>1.4;
+      if(absActive){
+        // Meter the brake impulse using this contact's remaining friction.
+        // Undo only braking applied this step, including when rolling backwards.
+        const direction=Math.sign(along);
+        const cornerForce=Math.min(Math.abs(fy),capacity*.9);
+        const available=Math.sqrt(capacity*capacity-cornerForce*cornerForce)*.985;
+        const target=(Math.abs(along)-available*compliance)/this.radius;
+        this.omega=direction*Math.max(direction*this.omega,Math.min(direction*freeOmega,target));
+      }
       // Implicit longitudinal slip resists oscillation at low wheel speeds.
-      let fx=stiffness*diff/(reference+stiffness*dt*(this.radius*this.radius/inertia+4/this.spec.mass));
-      if(brakeTorque>0&&Math.abs(freeOmega)<brakeTorque*dt/inertia+.02){
+      let fx=(this.omega*this.radius-along)/compliance;
+      if(!absActive&&brakeTorque>0&&Math.abs(freeOmega)<brakeTorque*dt/inertia+.02){
         const locked=clamp(-along*this.spec.mass/(4*dt),-brakeTorque/this.radius,brakeTorque/this.radius);
         if(Math.abs(locked)>Math.abs(fx))fx=locked;
       }
-      this.lateralSlip=Math.atan2(across,Math.max(2,Math.abs(along)));
-      const fy=clamp(-this.lateralSlip*this.load*8,-Math.abs(across)*this.spec.mass/(4*dt),Math.abs(across)*this.spec.mass/(4*dt));
-      const capacity=this.load*grip*(handbrake&&!this.front?.56:1)*clamp(1.1-.1*this.load/(this.spec.mass*9.81/4),.78,1.1);
       const scale=Math.min(1,capacity/(Math.hypot(fx,fy)||1));fx*=scale;
       this.impulse.copy(this.normal).multiplyScalar(this.load*dt).addScaledVector(this.forward,fx*dt).addScaledVector(this.side,fy*scale*dt);
       this.body.applyImpulseAtPoint(this.impulse,this.contact,true);
       const spin=this.omega-fx*this.radius*dt/inertia;
-      this.omega=brakeTorque>Math.abs(fx)*this.radius && brakeTorque>Math.abs(torque)?0:spin;
+      this.omega=!absActive && Math.abs(freeOmega)*inertia<=brakeTorque*dt && brakeTorque>Math.abs(fx)*this.radius?0:spin;
       this.slip=(this.omega*this.radius-along)/reference;
     }else {this.slip=0;this.lateralSlip=0;}
     this.omega=clamp(this.omega,-650,650);

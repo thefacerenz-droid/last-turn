@@ -9,11 +9,38 @@ import { roadAt } from '../src/world/roads';
 import type { VehicleSpec } from '../src/vehicles';
 import { follow, LaneIndex, drivers } from '../src/traffic/TrafficAI';
 import { handlingTunes,type HandlingTune } from '../src/vehicles/handlingTunes';
+import { getVehicle } from '../src/vehicles/catalogue';
 
 const fixture={length:4.55,width:1.88,height:1.34,wheelbase:2.72,track:1.61,wheelRadius:.335,mass:1590,cgHeight:.47,
   frontWeight:.51,spring:43000,damping:3800,travel:.22,antiRoll:12500,wheelMass:19,grip:1.12,drivetrain:'AWD',
   hp:480,torque:540,topSpeed:285,zeroTo100:4.1,gears:[4.1,2.72,1.94,1.48,1.18,.96,.81],finalDrive:3.63,
   redline:7500,idle:880,turbo:true,cylinders:6} as VehicleSpec;
+
+test('stock Kuroda keeps rolling grip during hard braking and steering',async()=>{
+  for(const steering of [0,.34]){
+    const physics=await PhysicsWorld.create('mesa');
+    try{
+      const settings=new SettingsManager(),car=new VehicleController(physics,getVehicle('kuroda-rs'),settings.tune('kuroda-rs'));
+      const input={...idleInput};
+      const step=()=>{physics.terrain(car.s);car.step(STEP,input,settings.data);physics.step(()=>{});car.capture();};
+      for(let i=0;i<90;i++)step();
+      car.body.setLinvel(car.forward.clone().multiplyScalar(100/3.6),true);
+      car.engine.transmission.select(4,100/3.6);
+      for(const wheel of car.wheels)wheel.omega=100/3.6/wheel.radius;
+      const start=car.position.clone();
+      input.brake=1;let locked=0,frames=0;
+      for(let i=0;i<260;i++){
+        input.steer=i<26?steering:0;step();
+        if(car.speed>5){for(const w of car.wheels)if(w.planted){frames++;if(w.slip<-.75)locked++;}}
+        if(car.speed<.5)break;
+      }
+      const distance=car.position.distanceTo(start);
+      console.log('100 km/h stop',steering?'with steering':'straight',distance.toFixed(1)+' m, wheel lock '+(100*locked/frames).toFixed(1)+'%');
+      assert.ok(distance<43 && car.speed<.5);
+      assert.ok(locked/frames<.04,'sustained wheel lock');
+    }finally{physics.dispose();}
+  }
+});
 
 test('four loaded wheels accelerate, shift, corner and brake on the actual streamed road',async()=>{
   const physics=await PhysicsWorld.create('pacific');
